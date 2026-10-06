@@ -14,5 +14,6 @@
       "category": "REENTRANCY"
     }
   ],
-  "minTotalFindings": 1
+  "minTotalFindings": 1,
+  "notes": "CI submissions auto-complete without engineer validation (platform >= 2026-10-07)"
 }
