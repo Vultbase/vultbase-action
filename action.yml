@@ -1,0 +1,76 @@
+name: 'Vultbase Security Audit'
+description: 'Automatically audit smart contracts with Vultbase on every PR'
+author: 'Vultbase'
+
+branding:
+  icon: 'shield'
+  color: 'green'
+
+inputs:
+  api-key:
+    description: 'Your Vultbase API key (vb_live_...)'
+    required: true
+  contracts:
+    description: 'Glob pattern for contract files (e.g. "contracts/**/*.sol")'
+    required: true
+  protocol-name:
+    description: 'Protocol name shown in the audit report'
+    required: true
+  language:
+    description: '"solidity" or "rust"'
+    required: false
+    default: 'solidity'
+  target-chain:
+    description: 'Target chain (ethereum, solana, polygon, etc.)'
+    required: false
+    default: 'ethereum'
+  mode:
+    description: |
+      Analysis mode:
+        pr   — 5 high-signal challenges (~3 min Solidity / ~10 min Rust). Default for PRs.
+        full — Full challenge suite for language. ENTERPRISE only. Recommended for merges to main.
+      Can be set per-event in .vultbase.yml instead of here.
+    required: false
+    default: 'pr'
+  fail-on:
+    description: 'Severity threshold that fails the build: critical | high | medium'
+    required: false
+    default: 'critical'
+  selected-challenges:
+    description: 'JSON array of challenge types to run. Overrides mode defaults.'
+    required: false
+    default: '[]'
+  config-file:
+    description: 'Path to .vultbase.yml config (relative to repo root). Set to "" to disable.'
+    required: false
+    default: '.vultbase.yml'
+  poll-interval:
+    description: 'Seconds between result polls'
+    required: false
+    default: '30'
+  timeout:
+    description: 'Max minutes to wait for analysis before failing'
+    required: false
+    default: '40'
+  vultbase-url:
+    description: 'Vultbase API base URL (override for self-hosted)'
+    required: false
+    default: 'https://vultbase.com'
+
+outputs:
+  job-id:
+    description: 'Submission ID (e.g. SUB-101)'
+  passed:
+    description: '"true" if no findings at or above fail-on severity, "false" otherwise'
+  critical-count:
+    description: 'Number of CRITICAL findings'
+  high-count:
+    description: 'Number of HIGH findings'
+  total-findings:
+    description: 'Total findings across all challenges'
+  report-url:
+    description: 'URL to the full audit report on Vultbase'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

@@ -1,0 +1,36 @@
+# .vultbase.yml — place this at the root of your protocol repository
+# Configures Vultbase CI/CD behaviour without needing to repeat settings
+# in every workflow file.
+#
+# All fields are optional. Explicit GitHub Actions workflow inputs
+# take precedence over these values.
+
+# ── Protocol metadata ─────────────────────────────────────────────────────────
+protocol: "MyProtocol"         # Shown in audit reports
+language:  solidity             # solidity | rust
+chain:     ethereum             # Target chain
+
+# ── Source file selection ──────────────────────────────────────────────────────
+audit:
+  include:
+    - "contracts/**/*.sol"      # Glob patterns to include
+  exclude:
+    # The Action always strips test/mock/interface files automatically.
+    # Add any project-specific paths here:
+    - "**/vendor/**"
+    - "**/lib/**"
+    - "**/helpers/**"
+
+# ── CI/CD behaviour per event ──────────────────────────────────────────────────
+ci:
+  on_pr:
+    # Fast check on every PR — 5 high-signal challenges (~3 min Solidity)
+    mode:     pr
+    fail_on:  critical
+    # challenges: []   # override with specific types if desired
+
+  on_push_main:
+    # Full suite on merge to main — all 15 challenges (~15 min Solidity)
+    # Requires ENTERPRISE tier. PROFESSIONAL automatically falls back to pr mode.
+    mode:     full
+    fail_on:  high

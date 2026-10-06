@@ -1,0 +1,67 @@
+# .github/workflows/security-audit.yml
+# Add this to your protocol repository.
+#
+# Tip: create a .vultbase.yml at your repo root to configure protocol, language,
+# include/exclude globs, and per-event mode/fail-on settings.
+# See: https://docs.vultbase.com/ci-cd#vultbase-yml
+
+name: Security Audit
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'contracts/**'
+      - 'src/**/*.sol'
+      - 'src/**/*.rs'
+  pull_request:
+    paths:
+      - 'contracts/**'
+      - 'src/**/*.sol'
+      - 'src/**/*.rs'
+
+jobs:
+  vultbase-audit:
+    name: Vultbase Smart Contract Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Solidity example ────────────────────────────────────────────────────
+      # mode 'pr'   = 5 high-signal challenges (~3 min) — default for PRs
+      # mode 'full' = all 15 challenges (~15 min)       — recommended for merges to main
+      # The action auto-detects push→main and uses 'full' if mode is not set explicitly.
+      - name: Run Vultbase Security Audit
+        id: audit
+        uses: vultbase/vultbase-action@v1
+        with:
+          api-key:       ${{ secrets.VULTBASE_API_KEY }}
+          contracts:     'contracts/**/*.sol'
+          protocol-name: 'MyProtocol'
+          language:      'solidity'
+          target-chain:  'ethereum'
+          fail-on:       'critical'   # critical | high | medium
+          # mode: 'pr'   # uncomment to override auto-detection
+
+      # ── Rust / Solana example ───────────────────────────────────────────────
+      # - name: Run Vultbase Security Audit (Rust)
+      #   uses: vultbase/vultbase-action@v1
+      #   with:
+      #     api-key:       ${{ secrets.VULTBASE_API_KEY }}
+      #     contracts:     'programs/**/*.rs'
+      #     protocol-name: 'MyAnchorProgram'
+      #     language:      'rust'
+      #     target-chain:  'solana'
+      #     fail-on:       'high'
+
+      - name: Print Audit Summary
+        if: always()
+        run: |
+          echo "Job ID:        ${{ steps.audit.outputs.job-id }}"
+          echo "Passed:        ${{ steps.audit.outputs.passed }}"
+          echo "Critical:      ${{ steps.audit.outputs.critical-count }}"
+          echo "High:          ${{ steps.audit.outputs.high-count }}"
+          echo "Total:         ${{ steps.audit.outputs.total-findings }}"
+          echo "Report:        ${{ steps.audit.outputs.report-url }}"
