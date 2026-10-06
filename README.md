@@ -14,6 +14,8 @@ Runs Vultbase smart contract analysis on pull requests and optional push-to-main
 
 See `example-workflow.yml` and `example.vultbase.yml` in this repository.
 
+**Live demo:** [Vultbase/security-audit-demo](https://github.com/Vultbase/security-audit-demo) — sample contract + workflow that asserts findings are returned.
+
 ## Inputs
 
 Documented in [action.yml](./action.yml).
