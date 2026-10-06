@@ -32,17 +32,33 @@ if (!jobId || !apiKey) {
   process.exit(1)
 }
 
-const res = await fetch(`${base}/api/ci/result/${jobId}`, {
-  headers: { Authorization: `Bearer ${apiKey}` },
-})
-if (!res.ok) {
-  console.error(`GET /api/ci/result/${jobId} → ${res.status}: ${await res.text()}`)
-  process.exit(1)
+const POLL_MS = 15_000
+const MAX_WAIT_MS = (parseInt(process.env.ASSERT_POLL_MAX_MINUTES || '15', 10) || 15) * 60_000
+
+async function fetchResult() {
+  const res = await fetch(`${base}/api/ci/result/${jobId}`, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  })
+  if (!res.ok) {
+    throw new Error(`GET /api/ci/result/${jobId} → ${res.status}: ${await res.text()}`)
+  }
+  return res.json()
 }
 
-const data = await res.json()
-if (data.status !== 'completed') {
-  console.error(`Job status is "${data.status}", expected completed`)
+const deadline = Date.now() + MAX_WAIT_MS
+let data = await fetchResult()
+while (data.status !== 'completed' && data.status !== 'failed') {
+  if (Date.now() >= deadline) {
+    console.error(`Timed out after ${MAX_WAIT_MS / 60000}m; last status="${data.status}"`)
+    process.exit(1)
+  }
+  console.log(`Status: ${data.status} — polling again in ${POLL_MS / 1000}s...`)
+  await new Promise(r => setTimeout(r, POLL_MS))
+  data = await fetchResult()
+}
+
+if (data.status === 'failed') {
+  console.error('Job failed on platform')
   process.exit(1)
 }
 
