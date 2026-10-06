@@ -15,7 +15,6 @@ import * as glob   from '@actions/glob'
 import * as fs     from 'fs'
 import * as path   from 'path'
 import * as yaml   from 'js-yaml'
-import FormData    from 'form-data'
 
 // ── Config file schema ───────────────────────────────────────────────────────
 interface VultbaseConfig {
@@ -128,13 +127,15 @@ async function submitContracts(files: string[]): Promise<string> {
   form.append('description', `GitHub Actions [${eventLabel}] — ${process.env.GITHUB_REPOSITORY} @ ${process.env.GITHUB_SHA?.slice(0, 8)}`)
 
   for (const file of files) {
-    form.append('contracts', fs.createReadStream(file), path.basename(file))
+    const content = fs.readFileSync(file)
+    const blob = new Blob([content], { type: 'text/plain' })
+    form.append('contracts', blob, path.basename(file))
   }
 
   const res = await fetch(`${BASE_URL}/api/ci/submit`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${API_KEY}`, ...form.getHeaders() },
-    body: form as any,
+    headers: { Authorization: `Bearer ${API_KEY}` },
+    body: form,
   })
   if (!res.ok) throw new Error(`Submit failed (${res.status}): ${await res.text()}`)
   const data = await res.json()
