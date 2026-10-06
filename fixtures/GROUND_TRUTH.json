@@ -1,0 +1,18 @@
+{
+  "source": "test-contracts/vuln-test-v1-reentrancy.sol",
+  "contractFile": "VaultV1.sol",
+  "required": [
+    {
+      "titleIncludes": "reentrancy-eth",
+      "category": "REENTRANCY",
+      "minSeverity": "HIGH"
+    }
+  ],
+  "recommended": [
+    {
+      "titleIncludes": "reentrancy-benign",
+      "category": "REENTRANCY"
+    }
+  ],
+  "minTotalFindings": 1
+}

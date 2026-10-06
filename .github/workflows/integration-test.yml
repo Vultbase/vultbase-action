@@ -42,16 +42,9 @@ jobs:
           echo "total=${{ steps.audit.outputs.total-findings }}"
           echo "report=${{ steps.audit.outputs.report-url }}"
 
-      - name: Assert API + findings
-        run: |
-          JOB="${{ steps.audit.outputs.job-id }}"
-          TOTAL="${{ steps.audit.outputs.total-findings }}"
-          if [ -z "$JOB" ]; then
-            echo "Missing job-id — is VULTBASE_API_KEY set on this repository?"
-            exit 1
-          fi
-          if [ "${TOTAL:-0}" -lt 1 ]; then
-            echo "Expected findings for fixtures/VaultV1.sol; total=$TOTAL"
-            exit 1
-          fi
-          echo "Integration OK ($TOTAL finding(s))."
+      - name: Assert ground-truth findings (regression)
+        env:
+          JOB_ID: ${{ steps.audit.outputs.job-id }}
+          VULTBASE_API_KEY: ${{ secrets.VULTBASE_API_KEY }}
+          VULTBASE_URL: https://www.vultbase.com
+        run: node fixtures/assert-ground-truth.mjs
