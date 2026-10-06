@@ -1,0 +1,57 @@
+name: Integration test (live API)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'fixtures/**'
+      - '.github/workflows/integration-test.yml'
+      - 'dist/**'
+      - 'src/**'
+
+jobs:
+  live-audit:
+    name: Run action against Vultbase API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vultbase audit (this repo @ v1)
+        id: audit
+        continue-on-error: true
+        uses: Vultbase/vultbase-action@v1
+        with:
+          api-key: ${{ secrets.VULTBASE_API_KEY }}
+          contracts: 'fixtures/**/*.sol'
+          protocol-name: 'vultbase-action-integration'
+          language: 'solidity'
+          target-chain: 'ethereum'
+          fail-on: 'critical'
+          mode: 'pr'
+          config-file: ''
+          vultbase-url: 'https://www.vultbase.com'
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "job-id=${{ steps.audit.outputs.job-id }}"
+          echo "passed=${{ steps.audit.outputs.passed }}"
+          echo "critical=${{ steps.audit.outputs.critical-count }}"
+          echo "high=${{ steps.audit.outputs.high-count }}"
+          echo "total=${{ steps.audit.outputs.total-findings }}"
+          echo "report=${{ steps.audit.outputs.report-url }}"
+
+      - name: Assert API + findings
+        run: |
+          JOB="${{ steps.audit.outputs.job-id }}"
+          TOTAL="${{ steps.audit.outputs.total-findings }}"
+          if [ -z "$JOB" ]; then
+            echo "Missing job-id — is VULTBASE_API_KEY set on this repository?"
+            exit 1
+          fi
+          if [ "${TOTAL:-0}" -lt 1 ]; then
+            echo "Expected findings for fixtures/VaultV1.sol; total=$TOTAL"
+            exit 1
+          fi
+          echo "Integration OK ($TOTAL finding(s))."
